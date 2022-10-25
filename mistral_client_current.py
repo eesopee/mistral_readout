@@ -25,7 +25,6 @@ import matplotlib.pyplot as plt
 import casperfpga 
 import corr
 from myQdr import Qdr as myQdr
-
 import types
 import logging
 #import threading
@@ -42,6 +41,7 @@ import subprocess
 #from olimpo_pipeline import pipeline
 from mistral_pipeline_dev import pipeline
 import tqdm
+from pathlib import Path
 
 import configuration as conf
 
@@ -88,13 +88,12 @@ class roachInterface(object):
         Now we set up MISTRAL roach.
         '''
 
-        self.divconst = 1. #not really necessary anymore since we only use MISTRAL and not olimpo, that needed double LO
+        self.divconst = 1. #not really necessary anymore since we only use MISTRAL and not olimpo, that needed double LO (=2 for OLIMPO)
         self.ip = conf.roach_ip
         self.center_freq = conf.LO
         self.global_attenuation= 1.0 #need to implement the class for Arduino variable attenuator!
         self.wavemax = 1.1543e-5 #what is this? Maybe we should increase it for 400 tones.
 
-        self.path_configuration = conf.path_configuration
         '''
         VALON SETUP
         '''
@@ -103,61 +102,10 @@ class roachInterface(object):
         '''
         For some god forsaken reason, the VALON changes serial port. Here we cycle through the serial ports until it connects and sets the LO frequency correctly.
         '''
-
-        i = 0
         
-        while True:
-            time.sleep(0.5)
-            try:
-
-                self.valon_port = conf.valon_port + str(i)
-                sys.stdout.write("Attempting Valon connection on port "+self.valon_port+"\n")
-                self.v1 = valon_synth.Synthesizer(self.valon_port)
-                self.v1.set_frequency(2,self.center_freq,0.01)
-                self.v1.set_frequency(1, 512.,0.01)
-                sys.stdout.write("Success!\n")
-                break
-
-            except OSError:
-                time.sleep(0.5)
-                i +=1
-                print(i)
-                sys.stdout.write("Failed. Attempting next port: ", conf.valon_port + str(i))
-                        
-                if i > 10:
-                    print("too many failed attempts")
-                    break
-
-                pass
-
-        sys.stdout.write("Valon connected at port "+self.valon_port+"\n")
-
-        '''
-        Arduino attenuator setup
-        '''
-        
-        i=0
-
-        while True:
-            time.sleep(0.5)
-            try:
-                self.arduino_port = conf.arduino_port + str(i)
-                self.att = vatt.Attenuator(self.arduino_port)
-                atts = self.att.get_att()
-                print("Current attenuation = ", atts)
-                sys.stdout.write("Success!\n")
-                break
-           
-           except:
-           
-               time.sleep(0.5)
-                sys.stdout.write("Failed. Attenpting next port\n")
-                i +=1
-
-                pass
-
-
-        sys.stdout.write("Attenuator connected at port "+self.arduino_port+"\n")
+        # connecting to valon and variable attenuator
+        self.connect_to_valon()
+        self.connect_to_arduino()
 
         #self.nchan = len(self.raw_chan[0])
 
@@ -187,6 +135,68 @@ class roachInterface(object):
         self.phases = np.random.uniform(0., 2.*np.pi, 2000)   #### ATTENZIONE PHASE A pi (ORA NO)
 
 
+    def connect_to_valon(self):
+        
+        for i in range(10):
+            time.sleep(0.5)
+            try:
+                self.valon_port = Path("/dev/") / "ttyUSB{:d}".format(i)
+                sys.stdout.write("Attempting Valon connection on port "+self.valon_port.as_posix()+"\n")
+                self.v1 = valon_synth.Synthesizer(self.valon_port.as_posix())
+                self.v1.set_frequency(2,self.center_freq,0.01)
+                self.v1.set_frequency(1, 512.,0.01)
+                sys.stdout.write("Success!\n")
+                sys.stdout.write("Valon connected at port "+self.valon_port.as_posix()+"\n")
+                break
+
+            except OSError:
+                if i == 9:
+                    print("too many failed attempts")
+                    break
+                
+                time.sleep(0.5)
+                sys.stdout.write("Failed. Attempting next port...")
+                        
+                pass
+
+
+    '''
+    Arduino attenuator setup
+    '''
+    
+    def connect_to_arduino(self):
+        
+        for i in range(10):
+            time.sleep(0.5)
+            try:
+                self.arduino_port = Path("/dev/") / "ttyACM{:d}".format(i)
+                self.att = vatt.Attenuator(self.arduino_port.as_posix())
+                atts = self.att.get_att()
+                print("Current attenuation = ", atts)
+                sys.stdout.write("Success!\n")
+                sys.stdout.write("Attenuator connected at port "+self.arduino_port+"\n")
+                sys.stdout.write("Setting default attenuations")
+                att.set_att(1, conf.att_RFOUT)
+                att.set_att(2, conf.att_RFIN)
+                sys.stdout.write("(RF_OUT, RF_IN) = " + str(att.get_att()))
+                break
+           
+            except OSError:
+                if i == 9:
+                    print("too many failed attempts")
+                    break
+                
+                time.sleep(0.5)
+                sys.stdout.write("Failed. Attempting next port...")
+                        
+                pass
+            
+            
+            
+            
+            
+            
+            
 
     def array_configuration(self):	
 #	self.path_configuration = '/home/data/olimpo/setup/kids/sweeps/target/current/'
