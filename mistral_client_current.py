@@ -136,6 +136,15 @@ class roachInterface(object):
 
 
     def connect_to_valon(self):
+        '''
+        Function that allows the connection with the VALON by attempting to 
+        connect to 10 differents USB ports
+
+        Returns
+        -------
+        None.
+
+        '''
         
         for i in range(10):
             time.sleep(0.5)
@@ -160,11 +169,16 @@ class roachInterface(object):
                 pass
 
 
-    '''
-    Arduino attenuator setup
-    '''
-    
     def connect_to_arduino(self):
+        '''
+        Function that allows the connection with the Arduino attenuators by 
+        attempting to connect to 10 differents ACM ports
+
+        Returns
+        -------
+        None.
+
+        '''
         
         for i in range(10):
             time.sleep(0.5)
