@@ -1575,7 +1575,7 @@ class roachInterface(object):
         #chan_freqs = np.concatenate((chan_freqs[len(chan_freqs)/2:],chan_freqs[:len(chan_freqs)/2]))
         
         new_targs = [chan_freqs[chan][np.argmin(mags[chan])] for chan in range(channels)]
-        print new_targs
+        #print new_targs
         for chan in range(channels):
                 plt.plot(chan_freqs[chan],mags[chan])
 
