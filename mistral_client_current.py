@@ -254,7 +254,7 @@ class roachInterface(object):
         self.rotations = np.load(self.path_configuration+'/rotations.npy')
         self.radii = np.load(self.path_configuration+'/radii.npy')
         sys.stdout.write( "reading freqs, centers, rotations and radii from %s\n" %self.path_configuration)
-        print 'radii', self.radii
+        print('radii', self.radii)
 
         self.make_format(path_current = True)
 
@@ -263,12 +263,12 @@ class roachInterface(object):
         for i in range(len(zeros)/2 + 1):
             coeff = np.binary_repr(int(zeros[i]), 32)
             coeff = int(coeff, 2)
-            print 'h' + str(i), coeff       
+            print('h' + str(i), coeff)      
             self.fpga.write_int('FIR_h'+str(i),coeff)
         return 
 
     def upload_fpg(self):
-        print 'Connecting to ROACHII on ',self.ip,'...'
+        print('Connecting to ROACHII on '+self.ip+'...')
         t1 = time.time()
         timeout = 10
         while not self.fpga.is_connected():
@@ -279,13 +279,13 @@ class roachInterface(object):
         time.sleep(0.1)
         
         if (self.fpga.is_connected() == True):
-            print 'Connection established'
+            print('Connection established')
             self.fpga.upload_to_ram_and_program(self.bitstream)
         else:
-                print 'Not connected to the FPGA'
+                print('Not connected to the FPGA')
                 
                 return 1 
-        print 'Uploaded', self.bitstream
+        print('Uploaded', self.bitstream)
         
         time.sleep(3)
         
@@ -293,13 +293,13 @@ class roachInterface(object):
 
     def qdrCal(self):    
     # Calibrates the QDRs. Run after writing to QDR.      
-        self.fpga.write_int('dac_reset',1)
-        print 'DAC on'
+        self.fpga.write_int('dac_reset', 1)
+        print('DAC on')
         bFailHard = False
         calVerbosity = 1
         qdrMemName = 'qdr0_memory'
         qdrNames = ['qdr0_memory','qdr1_memory']
-        print 'Fpga Clock Rate =',self.fpga.estimate_fpga_clock()
+        print('Fpga Clock Rate =',self.fpga.estimate_fpga_clock())
         self.fpga.get_system_information()
         results = {}
         for qdr in self.fpga.qdrs:
@@ -1586,9 +1586,9 @@ class roachInterface(object):
                         #print new_targs[chan], tt_freqs_new[chan]
                         plt.plot(tt_freqs_new[chan], mags[chan,indexmin[chan]], 'o')
                 else:
-                        chan_peaks, _ = find_peaks(-mags[chan], height=1.0, prominence=1.0)
-                        if peak.size > 0:
-                                for peak in chan_peaks:
+                        peaks, _ = find_peaks(-mags[chan], height=1.0, prominence=1.0)
+                        if peaks.size > 0:
+                                for peak in peaks:
                                         plt.plot(chan_freqs[chan, peak], mags[chan, peak], 'o')
                         else:
                                 half_span_arg = int(0.5*conf.sweep_span*2.0/conf.sweep_step)
