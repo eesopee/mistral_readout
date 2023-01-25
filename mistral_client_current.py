@@ -1588,7 +1588,7 @@ class roachInterface(object):
                 else:
                         chan_peaks, _ = find_peaks(-mags[chan], height=1.0, prominence=1.0)
                         for peak in chan_peaks:
-                                if len(peak) > 0:
+                                if peak.size > 0:
                                     plt.plot(chan_freqs[chan, peak], mags[chan, peak], 'o')
                                 else:
                                     half_span_arg = int(0.5*self.span*2.0/self.step)
