@@ -303,13 +303,13 @@ class roachInterface(object):
         self.fpga.get_system_information()
         results = {}
         for qdr in self.fpga.qdrs:
-            print qdr
+            print(qdr)
             mqdr = myQdr.from_qdr(qdr)
             results[qdr.name] = mqdr.qdr_cal2(fail_hard=bFailHard,verbosity=calVerbosity)
-        print 'qdr cal results:',results
+        print('qdr cal results: ',results)
         for qdrName in ['qdr0','qdr1']:
             if not results[qdr.name]:
-                print 'Calibration Failed'
+                print('Calibration Failed')
                 break
 
     # calibrates QDR and initializes GbE block
@@ -342,8 +342,8 @@ class roachInterface(object):
             #self.save_path = '/mnt/iqstream/'
             self.qdrCal()
             self.initialize_GbE()
-            print '\n************ QDR Calibrated ************'
-            print '************ Packet streaming activated ************\n'
+            print('\n************ QDR Calibrated ************')
+            print('************ Packet streaming activated ************\n')
             return res1 + 0
         except:
             return 1
@@ -378,16 +378,16 @@ class roachInterface(object):
     # Returns the dds shift
         dds_spec = np.abs(np.fft.rfft(self.I_dds[chan::self.fft_len],self.fft_len))
         dds_index = np.where(np.abs(dds_spec) == np.max(np.abs(dds_spec)))[0][0]
-        print 'Finding LUT shift...' 
+        print('Finding LUT shift...')
         for i in range(self.fft_len/2):
-            print i
+            print(i)
             mixer_in = self.read_mixer_snaps(i, chan, mixer_out = False)
             I0_dds_in = mixer_in[2::8]    
             #I0_dds_in[np.where(I0_dds_in > 32767.)] -= 65535.
             snap_spec = np.abs(np.fft.rfft(I0_dds_in,self.fft_len))
             snap_index = np.where(np.abs(snap_spec) == np.max(np.abs(snap_spec)))[0][0]
             if dds_index == snap_index:
-                print 'LUT shift =', i
+                print('LUT shift =', i)
                 shift = i
                 break
         return shift
@@ -397,7 +397,7 @@ class roachInterface(object):
         freqs = np.round(freqs/self.dac_freq_res)*self.dac_freq_res
         amp_full_scale = (2**15 - 1)
         if DAC_LUT:
-            print 'freq comb uses DAC_LUT'
+            print('freq comb uses DAC_LUT')
             fft_len = self.LUTbuffer_len
             bins = self.fft_bin_index(freqs, fft_len, samp_freq)
             #np.random.seed(333)
@@ -419,7 +419,7 @@ class roachInterface(object):
 
             ######POTENZE DIVERSE PER ARRAY DIVERSI: 200 E 350 GHz NEL DILUIZIONE 8-08-17##################	
             #tmp, self.amps = np.loadtxt(os.path.join(self.folder_frequencies, 'target_freqs.dat'), unpack=True)COMMENTO BY ALE P.
-            print self.amps
+            print(self.amps)
             # di seguito per applicare potenza diverse per array
 #	    if !self.roach2:
 ##		ROACH2
@@ -440,7 +440,7 @@ class roachInterface(object):
             wave = np.fft.ifft(self.spec)
             waveMax = np.max(np.abs(wave))
             waveMax = self.wavemax
-            print "waveMax",waveMax, "attenuation",self.global_attenuation
+            print("waveMax",waveMax, "attenuation",self.global_attenuation)
             I = (wave.real/waveMax)*(amp_full_scale)*self.global_attenuation  
             Q = (wave.imag/waveMax)*(amp_full_scale)*self.global_attenuation  
             #wave = signal.convolve(wave,np.hanning(3), mode = 'same')
@@ -501,10 +501,10 @@ class roachInterface(object):
         self.Q_lut[1::4] = self.Q_dac[0::2]
         self.Q_lut[2::4] = self.Q_dds[1::2]
         self.Q_lut[3::4] = self.Q_dds[0::2]
-        print 'String Packing LUT...',
+        print('String Packing LUT...')
         self.I_lut_packed = self.I_lut.astype('>h').tostring()
         self.Q_lut_packed = self.Q_lut.astype('>h').tostring()
-        print 'Done.'
+        print('Done.')
         return 
 
     def writeQDR(self, freqs, transfunc = False):
@@ -516,14 +516,14 @@ class roachInterface(object):
 
         self.fpga.write_int('dac_reset',1)
         self.fpga.write_int('dac_reset',0)
-        print 'Writing DAC and DDS LUTs to QDR...',
+        print('Writing DAC and DDS LUTs to QDR...')
         self.fpga.write_int('start_dac',0)
         self.fpga.blindwrite('qdr0_memory',self.I_lut_packed,0)
         self.fpga.blindwrite('qdr1_memory',self.Q_lut_packed,0)
         self.fpga.write_int('start_dac',1)
         self.fpga.write_int('downsamp_sync_accum_reset', 0)
         self.fpga.write_int('downsamp_sync_accum_reset', 1)
-        print 'Done.'
+        print('Done.')
         return 
 
     def read_QDR_katcp(self):
