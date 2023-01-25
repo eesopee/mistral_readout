@@ -1799,7 +1799,7 @@ class roachInterface(object):
         Q_center = self.centers.imag
         cosi = np.cos(-self.rotations)
         sini = np.sin(-self.rotations)	
-
+        
         print "saving format_complex_extra in ", formatname
 #	ftrunc = np.hstack(freqs.astype(int))
         format_file = open(formatname, 'w')
@@ -1812,7 +1812,7 @@ class roachInterface(object):
                 format_file.write( 'chq_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.i   0  # Q centered \n')
                 format_file.write( 'chp_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.a   0  # Phase \n')
                 format_file.write( 'cha_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.m   0  # Magnitude \n \n')
-
+                
         format_file.close()
         return
 
@@ -2081,9 +2081,9 @@ class roachInterface(object):
             if opt == 7:
                 prompt = raw_input('Do sweep? (y/n) ')
                 if prompt == 'y':
-                        self.target_sweep(sweep = True)
+                        self.target_sweep(sweep=True, do_plot=True)
                 else:
-                        self.target_sweep()
+                        self.target_sweep(plot=True, do_plot=True)
 
                 print "Setting frequencies to the located values "
                 time.sleep(0.7)
