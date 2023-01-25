@@ -14,103 +14,112 @@ y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
 
 class pipeline(object):
     def __init__(self, targ_path=""):
-	t_init = time.time()
-	self.targ_path = targ_path
-	if(targ_path == ""):
+        t_init = time.time()
+        self.targ_path = targ_path
+        if(targ_path == ""):
+        ######## Target Sweeps ############
+            self.targ_path = raw_input('Absolute path to known good target sweep dir (e.g. /data/mistral/setup/kids/sweeps/target/current): ' )
 
-	######## Target Sweeps ############
-	       	self.targ_path = raw_input('Absolute path to known good target sweep dir (e.g. /data/mistral/setup/kids/sweeps/target/current): ' )
-
-	data_files=[f for f in sorted(os.listdir(self.targ_path)) if f.endswith('.npy')]
+        data_files=[f for f in sorted(os.listdir(self.targ_path)) if f.endswith('.npy')]
         I = np.array([np.load(os.path.join(self.targ_path,f)) for f in data_files if f.startswith('I')])
         Q = np.array([np.load(os.path.join(self.targ_path,f)) for f in data_files if f.startswith('Q')])
-	
-        self.lo_freqs = np.loadtxt(self.targ_path + '/sweep_freqs.dat')
-        #self.target_freqs = np.load(self.targ_path + '/target_freqs.npy')
-	self.target_freqs = np.loadtxt(self.targ_path + '/target_freqs.dat')        
-	self.raw_chan = I + 1j*Q
         
-	#self.chan_ts /= (2**15 - 1)
-	#self.chan_ts /= ((2**21 - 1) / 2048)
-	
-	self.nchan = len(self.raw_chan[0])
+        self.lo_freqs = np.loadtxt(self.targ_path + '/sweep_freqs.dat')
+        self.target_freqs = np.loadtxt(self.targ_path + '/target_freqs.dat')        
+        self.raw_chan = I + 1j*Q
+        
+        #self.chan_ts /= (2**15 - 1)
+        #self.chan_ts /= ((2**21 - 1) / 2048)
+        
+        self.nchan = len(self.raw_chan[0])
         self.cm = plt.cm.Spectral(np.linspace(0.05,0.95,self.nchan))
         self.raw_I = I
         self.raw_Q = Q
-	
         self.mag = np.abs(self.raw_chan)
-	# locate minima
-	
-	self.target_freqs_out = np.zeros(self.nchan) 
+        self.target_freqs_out = np.zeros(self.nchan) 
 
-	print self.mag.shape
-	nchannels = len(self.mag[0,:])
-	n_sweep = len(self.mag[:,0])
-	print 'nchannels ', nchannels,'self.nchan ', self.nchan
+        print(self.mag.shape)
+        nchannels = len(self.mag[0,:])
+        n_sweep = len(self.mag[:,0])
+        print('nchannels ', nchannels, 'self.nchan ', self.nchan)
 
-	self.indexmin = np.zeros(nchannels, dtype = int)
-	self.minfreq = np.zeros(nchannels, dtype = float)
-	self.minfreqs = np.zeros(nchannels, dtype= float)
+        #self.indexmin = np.zeros(nchannels, dtype = int)
+        #self.minfreq = np.zeros(nchannels, dtype = float)
+        #self.minfreqs = np.zeros(nchannels, dtype = float)
 
-	for ii in range(nchannels):
-		indexmin = np.argmin(self.mag[:,ii])
-		self.freqs = self.lo_freqs + self.target_freqs[ii]
-		
-		#self.lo_min[ii] = np.average(self.lo_freqs*self.mag[:,ii])/np.sum(self.mag[:,ii])
+        channel_peaks = []
 
-		target_freq = self.target_freqs[ii]
-		
-		self.freqs = target_freq + (self.lo_freqs - self.lo_freqs[n_sweep/2])/1e6
+        from scipy.signal import find_peaks
+        for channel in range(nchannels):
+            target_freq = self.target_freqs[channel]
+            freqs = target_freq + (self.lo_freqs - self.lo_freqs[0.5*n_sweep])/1.0e6
+            # at this point the script finds the local minima
+            peaks, _ = find_peaks(-self.mag[:, channel], height=1.0, prominence=1.0)
+            if peaks.size > 0:
+                for peak in peaks:
+                    channel_peaks.append((channel, freqs[peak]))
+            else:
+                half_span_arg = int(0.5*freqs.size)
+                channel_peaks.append((channel, freqs[half_span_arg]))
+            
+            '''
+            indexmin = np.argmin(self.mag[:,channel])
+            #self.freqs = self.lo_freqs + self.target_freqs[channel]
+            #self.lo_min[channel] = np.average(self.lo_freqs*self.mag[:,channel])/np.sum(self.mag[:,channel])
 
-		self.minfreq = np.sum(self.mag[:,ii]*self.freqs)/np.sum(self.mag[:,ii])
-		
-		self.minfreqs[ii] = self.minfreq #tt + (self.minfreq-self.lo_freqs[n_sweep/2])/1e6		
-		self.target_freqs_out[ii] = target_freq + (self.lo_freqs[indexmin] - self.lo_freqs[n_sweep/2])/1.e6 #/2
-		print ii, indexmin, self.target_freqs[ii] , self.target_freqs_out[ii]
-		self.indexmin[ii] = indexmin
+            target_freq = self.target_freqs[channel]
+            self.freqs = target_freq + (self.lo_freqs - self.lo_freqs[n_sweep/2])/1e6
+
+            self.minfreq = np.sum(self.mag[:,channel]*self.freqs)/np.sum(self.mag[:,channel])
+            
+            self.minfreqs[channel] = self.minfreq #tt + (self.minfreq-self.lo_freqs[n_sweep/2])/1e6                
+            self.target_freqs_out[channel] = target_freq + (self.lo_freqs[indexmin] - self.lo_freqs[n_sweep/2])/1.e6 #/2
+            print(channel, indexmin, self.target_freqs[channel] , self.target_freqs_out[channel])
+            self.indexmin[channel] = indexmin
+            '''
 
         self.phase = np.angle(self.raw_chan)
         self.centers=self.loop_centers(self.raw_chan) # returns self.centers
-	self.chan_centered = self.raw_chan - self.centers
-	print self.raw_chan.shape
+        self.chan_centered = self.raw_chan - self.centers
+        print(self.raw_chan.shape)
 #       self.rotations = np.angle(self.chan_centered[self.chan_centered.shape[0]/2])
-#	self.radii = np.absolute(self.chan_centered[self.chan_centered.shape[0]/2])
-	self.rotations = np.zeros(nchannels, dtype = float)
-	self.radii = np.zeros(nchannels, dtype = float)
-	print self.indexmin.shape 
-#	print " ii, self.indexmin[ii], self.target_freqs_out[ii],self.rotations[ii],self.radii[ii], self.centers[ii]  " 
-	print 'ii, self.indexmin[ii], self.rotations[ii], np.angle(self.centers[ii]), delta angle'
-	for ii in range(nchannels):
-		self.rotations[ii] = np.angle(self.chan_centered[self.indexmin[ii],ii])
-		self.radii[ii]  = np.absolute(self.chan_centered[self.indexmin[ii],ii])
-#		print ii, self.indexmin[ii], self.target_freqs_out[ii],self.rotations[ii],self.radii[ii], self.centers[ii]
-		print ii, self.indexmin[ii], np.rad2deg((self.rotations[ii])), np.rad2deg(np.angle(self.centers[ii])), np.rad2deg(self.rotations[ii]-np.angle(self.centers[ii]))
+#        self.radii = np.absolute(self.chan_centered[self.chan_centered.shape[0]/2])
+        self.rotations = np.zeros(nchannels, dtype = float)
+        self.radii = np.zeros(nchannels, dtype = float)
+        print(self.indexmin.shape)
+#        print " ii, self.indexmin[ii], self.target_freqs_out[ii],self.rotations[ii],self.radii[ii], self.centers[ii]  " 
+        print('ii, self.indexmin[ii], self.rotations[ii], np.angle(self.centers[ii]), delta angle')
+        for channel in range(nchannels):
+            self.rotations[channel] = np.angle(self.chan_centered[self.indexmin[channel],channel])
+            self.radchannel[channel]  = np.absolute(self.chan_centered[self.indexmin[channel],channel])
+#                print channel, self.indexmin[channel], self.target_freqs_out[channel],self.rotations[channel],self.radchannel[channel], self.centers[channel]
+            print(channel, self.indexmin[channel], np.rad2deg((self.rotations[channel])), np.rad2deg(np.angle(self.centers[channel])), np.rad2deg(self.rotations[channel]-np.angle(self.centers[channel])))
 
-	self.chan_rotated = self.chan_centered * np.exp(-1j*self.rotations)#/self.radii
+        self.chan_rotated = self.chan_centered * np.exp(-1j*self.rotations)#/self.radii
         self.phase_rotated = np.angle(self.chan_rotated)
         self.bb_freqs = np.loadtxt(self.targ_path + '/bb_freqs.dat')
         
         #self.delta_lo = 2.5e3 #mai utilizzato nel codice
 #        prompt = raw_input('Save phase centers and rotations in ' + self.targ_path + ' (**** MAY OVERWRITE ****) (y/n)? ')
-#	if prompt == 'y':
-	np.save(self.targ_path + '/centers.npy', self.centers)
-       	np.save(self.targ_path + '/rotations.npy', self.rotations)
-	np.save(self.targ_path + '/radii.npy',self.radii)
-	sys.stdout.write("     Saving fine tuned resonances on file\n")	
-	#np.save(self.targ_path + '/target_freqs_new.npy', self.target_freqs_out)
-	np.savetxt(self.targ_path+"/target_freqs_new.dat", self.target_freqs_out)
+#        if prompt == 'y':
+        np.save(self.targ_path + '/centers.npy', self.centers)
+        np.save(self.targ_path + '/rotations.npy', self.rotations)
+        np.save(self.targ_path + '/radii.npy',self.radii)
+        sys.stdout.write("     Saving fine tuned resonances on file\n")        
+        #np.save(self.targ_path + '/target_freqs_new.npy', self.target_freqs_out)
+        np.savetxt(self.targ_path+"/target_freqs_new.dat", self.target_freqs_out)
 
-	np.save(self.targ_path + '/index_freqs_new.npy', self.indexmin)
+        np.save(self.targ_path + '/index_freqs_new.npy', self.indexmin)
         ######## Time streams #################3
-	"""
-	self.ts_on = np.load(os.path.join(self.datapath,)) + 1j*np.load(os.path.join(self.path + '/timestreams/'))
+        """
+        self.ts_on = np.load(os.path.join(self.datapath,)) + 1j*np.load(os.path.join(self.path + '/timestreams/'))
         self.ts_on_centered = self.ts_on - self.centers
         self.ts_on_rotated = self.ts_on_centered *np.exp(-1j*self.rotations)
         self.i_off, self.q_off = self.ts_off.real, self.ts_off.imag
         self.i_on, self.q_on = self.ts_on_rotated.imag, self.ts_on_rotated.imag
         self.phase_on = np.angle(self.ts_on_rotated)    
-    	"""
-	print("Execution time=", time.time()-t_init)
+            """
+        print("Execution time=", time.time()-t_init)
 
     def open_stored(self, save_path = None):
         files = sorted(os.listdir(save_path))
@@ -172,30 +181,30 @@ class pipeline(object):
         return np.array(centers)
 
     def plot_loop_raw(self,chan):
-        print self.raw_chan.real[self.indexmin[chan],chan], self.raw_chan.imag[self.indexmin[chan],chan]
+        print(self.raw_chan.real[self.indexmin[chan],chan], self.raw_chan.imag[self.indexmin[chan],chan])
         plt.plot(self.raw_chan.real[:,chan],self.raw_chan.imag[:,chan],'x',color=self.cm[chan])
-	#plt.plot(self.centers[0,chan],self.centers[1,chan], 'o', color = 'green')
+        #plt.plot(self.centers[0,chan],self.centers[1,chan], 'o', color = 'green')
 
         plt.gca().set_aspect('equal')
-	plt.plot(self.raw_chan.real[self.indexmin[chan],chan], self.raw_chan.imag[self.indexmin[chan],chan], 'o', color='red')
+        plt.plot(self.raw_chan.real[self.indexmin[chan],chan], self.raw_chan.imag[self.indexmin[chan],chan], 'o', color='red')
         plt.xlim(np.std(self.raw_chan.real[:,chan])*-3.,np.std(self.raw_chan.real[:,chan]*3))
         plt.ylim(np.std(self.raw_chan.imag[:,chan])*-3.,np.std(self.raw_chan.imag[:,chan]*3))
         plt.tight_layout()
-	plt.show()
+        plt.show()
         return
 
     def plot_loop_rotated(self,chan):
         plt.figure(figsize = (20,20))
         plt.title('IQ loop Channel = ' + str(chan) + ', centered and rotated')
         plt.plot(self.chan_rotated.real[:,chan],self.chan_rotated.imag[:,chan],'x',color='red',mew=2, ms=6)
-	plt.plot(self.chan_rotated.real[self.indexmin[chan],chan], self.chan_rotated.imag[self.indexmin[chan],chan], 'o', color='green')
+        plt.plot(self.chan_rotated.real[self.indexmin[chan],chan], self.chan_rotated.imag[self.indexmin[chan],chan], 'o', color='green')
         plt.gca().set_aspect('equal')
         plt.xlim(np.std(self.chan_rotated.real[:,chan])*-3,np.std(self.chan_rotated.real[:,chan])*3)
         plt.ylim(np.std(self.chan_rotated.imag[:,chan])*-3,np.std(self.chan_rotated.imag[:,chan])*3)
         plt.xlabel('I', size = 20)
         plt.ylabel('Q', size = 20)
         plt.tight_layout()
-	plt.show()
+        plt.show()
         return
 
     def multiplot(self, chan):
@@ -204,12 +213,12 @@ class pipeline(object):
         #rf_freq= rf_freqs[chan] - (np.max(rf_freqs) + np.min(rf_freqs))/2. + self.lo_freqs
         #print np.shape(rf_freq)
         rf_freqs = (self.bb_freqs[chan] + (self.lo_freqs))/1.0e6 #lo/2
-	self.mag /= (2**15 - 1)
-	self.mag /= ((2**21 - 1) / 2048)
+        self.mag /= (2**15 - 1)
+        self.mag /= ((2**21 - 1) / 2048)
         fig,axs = plt.subplots(1,3)
         plt.suptitle('Chan ' + str(chan))
 
-	axs[0].plot(rf_freqs, 20*np.log10(self.mag[:,chan]),'b', linewidth = 3)
+        axs[0].plot(rf_freqs, 20*np.log10(self.mag[:,chan]),'b', linewidth = 3)
 
         axs[1].plot(rf_freqs, self.phase_rotated[:,chan],'b',linewidth = 3)
 
@@ -218,48 +227,48 @@ class pipeline(object):
         axs[2].legend(loc = 'lower left', fontsize = 15)
         plt.grid()            
         plt.tight_layout()
-	#plt.savefig(os.path.join(self.datapath,'multiplot%04drotated.png'%chan), bbox = 'tight')
+        #plt.savefig(os.path.join(self.datapath,'multiplot%04drotated.png'%chan), bbox = 'tight')
         plt.show()         
         #plt.clf()
         #print ' plotting ',chan,;sys.stdout.flush()
         return
 
     def plot_targ(self, path):
-    	plt.ion()
-	plt.figure(6)
-	plt.clf()
-	lo_freqs, Is, Qs = self.open_stored(path)
-	lo_freqs = np.loadtxt(path + '/sweep_freqs.dat')
-	bb_freqs = np.loadtxt(path + '/bb_freqs.dat')
-	channels = len(bb_freqs)
-	mags = np.zeros((channels,len(lo_freqs))) 
-	chan_freqs = np.zeros((channels,len(lo_freqs)))
+        plt.ion()
+        plt.figure(6)
+        plt.clf()
+        lo_freqs, Is, Qs = self.open_stored(path)
+        lo_freqs = np.loadtxt(path + '/sweep_freqs.dat')
+        bb_freqs = np.loadtxt(path + '/bb_freqs.dat')
+        channels = len(bb_freqs)
+        mags = np.zeros((channels,len(lo_freqs))) 
+        chan_freqs = np.zeros((channels,len(lo_freqs)))
         new_targs = np.zeros((channels))
-	print('channels =',channels)
-	for chan in range(channels):
-		print(chan)#,Is[:,chan],Qs[:,chan])
+        print('channels =',channels)
+        for chan in range(channels):
+            print(chan)#,Is[:,chan],Qs[:,chan])
 
-		print(Is)
-		print(Qs)
-        	mags[chan] = np.sqrt(Is[:,chan]**2 + Qs[:,chan]**2)
-		mags[chan] /= 2**15 - 1
-		mags[chan] /= ((2**21 - 1) / 512.)
-		mags[chan] = 20*np.log10(mags[chan])
-		chan_freqs[chan] = (lo_freqs + bb_freqs[chan])/1.0e6 #lo/2
+            print(Is)
+            print(Qs)
+            mags[chan] = np.sqrt(Is[:,chan]**2 + Qs[:,chan]**2)
+            mags[chan] /= 2**15 - 1
+            mags[chan] /= ((2**21 - 1) / 512.)
+            mags[chan] = 20*np.log10(mags[chan])
+            chan_freqs[chan] = (lo_freqs + bb_freqs[chan])/1.0e6 #lo/2
 
-		plt.vlines(self.target_freqs_out[chan], np.min(mags[chan]), np.max(mags[chan]), color="red")
-		plt.vlines(self.minfreqs[chan], np.min(mags[chan]), np.max(mags[chan]), color="green")
+            plt.vlines(self.target_freqs_out[chan], np.min(mags[chan]), np.max(mags[chan]), color="red")
+            plt.vlines(self.minfreqs[chan], np.min(mags[chan]), np.max(mags[chan]), color="green")
 
-	#????? era scommentato mags = np.concatenate((mags[len(mags)/2:],mags[:len(mags)/2]))
-	#bb_freqs = np.concatenate(bb_freqs[len(b_freqs)/2:],bb_freqs[:len(bb_freqs)/2]))
-	#????? era scom chan_freq = np.concatenate((chan_freqs[len(chan_freqs)/2:],chan_freqs[:len(chan_freqs)/2]))
-	#new_targs = [chan_freqs[chan][np.argmin(mags[chan])] for chan in range(channels)]
-	#print new_targs
+        #????? era scommentato mags = np.concatenate((mags[len(mags)/2:],mags[:len(mags)/2]))
+        #bb_freqs = np.concatenate(bb_freqs[len(b_freqs)/2:],bb_freqs[:len(bb_freqs)/2]))
+        #????? era scom chan_freq = np.concatenate((chan_freqs[len(chan_freqs)/2:],chan_freqs[:len(chan_freqs)/2]))
+        #new_targs = [chan_freqs[chan][np.argmin(mags[chan])] for chan in range(channels)]
+        #print new_targs
 
-	for chan in range(channels):
-		plt.plot(chan_freqs[chan],mags[chan])
-	plt.title('Target sweep')
-	plt.xlabel('frequency (MHz)')
+        for chan in range(channels):
+                plt.plot(chan_freqs[chan],mags[chan])
+        plt.title('Target sweep')
+        plt.xlabel('frequency (MHz)')
         plt.ylabel('dB')
-	return
+        return
 
