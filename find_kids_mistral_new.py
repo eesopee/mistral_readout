@@ -103,6 +103,31 @@ def lowpass_cosine( y, tau, f_3db, width, padd_data=True):
     # return the filtered data
         return filtered
 
+'''
+            adaptive_iteratively_reweighted_penalized_least_squares_smoothing function
+'''
+def adaptive_iteratively_reweighted_penalized_least_squares_smoothing(data, lam=1.0e6, N_iter=5):
+    '''
+    lam: adjusting parameter
+    N_iter: number of iteration
+    '''
+    from scipy.sparse import spdiags, linalg, diags
+    from scipy.linalg import norm
+    L = len(data)
+    D = diags([1,-2,1],[0,-1,-2], shape=(L,L-2))
+    w = np.ones(L)
+    for i in range(N_iter):
+        W = spdiags(w, 0, L, L)
+        Z = W + lam * D.dot(D.transpose())
+        z = linalg.spsolve(Z, w*data)
+        d_mod = norm((z-data)[z>data])
+        if d_mod < 0.001 * norm(data):
+            return z
+        p = np.exp(i*(data-z)/d_mod)
+        w = 0.0*(data < z) + p*(data >= z)
+    return z
+
+
 def main(path, savefile=False):
     print("Searching for KIDs")
     
@@ -114,12 +139,19 @@ def main(path, savefile=False):
     sweep_step = 1.25 # kHz
     smoothing_scale = 2500.0 # kHz
     
-    filtered = lowpass_cosine( mags, sweep_step, 1./smoothing_scale, 0.1 * (1.0/smoothing_scale))
+    #filtered = lowpass_cosine( mags, sweep_step, 1./smoothing_scale, 0.1 * (1.0/smoothing_scale))
+    filtered = adaptive_iteratively_reweighted_penalized_least_squares_smoothing(mags)
     from scipy.signal import find_peaks
+
+    # parametri buoni per MISTRAL 415 v4
+    peak_width=(1.0, 150.0)
+    peak_height=0.3
+    peak_prominence=(0.2, 30.0)
+
     peaks, roba = find_peaks(-(mags-filtered),
-                                            width=3,
-                                            prominence=2,
-                                            height=1.5)
+                                            width=peak_width,
+                                            prominence=peak_prominence,
+                                            height=peak_height)
                                        
     
     

@@ -24,8 +24,9 @@ class pipeline(object):
 	data_files=[f for f in sorted(os.listdir(self.targ_path)) if f.endswith('.npy')]
         I = np.array([np.load(os.path.join(self.targ_path,f)) for f in data_files if f.startswith('I')])
         Q = np.array([np.load(os.path.join(self.targ_path,f)) for f in data_files if f.startswith('Q')])
-	self.lo_freqs = np.load(self.targ_path + '/sweep_freqs.npy')#
-	#self.target_freqs = np.load(self.targ_path + '/target_freqs.npy')
+	
+        self.lo_freqs = np.loadtxt(self.targ_path + '/sweep_freqs.dat')
+        #self.target_freqs = np.load(self.targ_path + '/target_freqs.npy')
 	self.target_freqs = np.loadtxt(self.targ_path + '/target_freqs.dat')        
 	self.raw_chan = I + 1j*Q
         
@@ -87,7 +88,8 @@ class pipeline(object):
 
 	self.chan_rotated = self.chan_centered * np.exp(-1j*self.rotations)#/self.radii
         self.phase_rotated = np.angle(self.chan_rotated)
-        self.bb_freqs = np.load(self.targ_path + '/bb_freqs.npy')
+        self.bb_freqs = np.loadtxt(self.targ_path + '/bb_freqs.dat')
+        
         #self.delta_lo = 2.5e3 #mai utilizzato nel codice
 #        prompt = raw_input('Save phase centers and rotations in ' + self.targ_path + ' (**** MAY OVERWRITE ****) (y/n)? ')
 #	if prompt == 'y':
@@ -227,8 +229,8 @@ class pipeline(object):
 	plt.figure(6)
 	plt.clf()
 	lo_freqs, Is, Qs = self.open_stored(path)
-	lo_freqs = np.load(path + '/sweep_freqs.npy')
-	bb_freqs = np.load(path + '/bb_freqs.npy')
+	lo_freqs = np.loadtxt(path + '/sweep_freqs.dat')
+	bb_freqs = np.loadtxt(path + '/bb_freqs.dat')
 	channels = len(bb_freqs)
 	mags = np.zeros((channels,len(lo_freqs))) 
 	chan_freqs = np.zeros((channels,len(lo_freqs)))
