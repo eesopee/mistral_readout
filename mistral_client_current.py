@@ -1282,7 +1282,7 @@ class roachInterface(object):
         #self.find_kids_olimpo.main(path)
         return 
 
-    def target_sweep(self, write = True, sweep = False, path_current = False, do_plot=True, olimpo=False):
+    def target_sweep(self, write=True, sweep=False, path_current=False, do_plot=True, olimpo=False):
 
         '''
         Function used for tuning. It spans a small range of frequencies around known resonances.
@@ -1340,12 +1340,10 @@ class roachInterface(object):
         print "RF tones =", upconvert
         self.v1.set_frequency(2,center_freq / (1.0e6), 0.01) # LO
         print '\nTarget baseband freqs (MHz) =', self.bb_target_freqs/1.0e6
-        span =self.sweep_span #200.0e3   #era 400.e3             # era 1000.e3 #era 400.e3 20170803
-        start = center_freq - (span)  # era (span/2)
-        stop = center_freq + (span)   # era (span/2) 
-        step = self.sweep_step #1.25e3 * 2.                 # era senza   
-        sweep_freqs = np.arange(start, stop, step)
-        sweep_freqs = np.round(sweep_freqs/step)*step
+        start = center_freq - self.sweep_span
+        stop = center_freq + self.sweep_span 
+        sweep_freqs = np.arange(start, stop, self.sweep_step)
+        sweep_freqs = np.round(sweep_freqs/self.sweep_step)*self.sweep_step
         print "LO freqs =", sweep_freqs
         np.save(save_path + '/bb_freqs.npy',self.bb_target_freqs)
 #	np.save(vna_path  + '/bb_freqs.npy',self.bb_target_freqs)
