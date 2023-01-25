@@ -1587,12 +1587,12 @@ class roachInterface(object):
                         plt.plot(tt_freqs_new[chan], mags[chan,indexmin[chan]], 'o')
                 else:
                         chan_peaks, _ = find_peaks(-mags[chan], height=1.0, prominence=1.0)
-                        for peak in chan_peaks:
-                                if peak.size > 0:
-                                    plt.plot(chan_freqs[chan, peak], mags[chan, peak], 'o')
-                                else:
-                                    half_span_arg = int(0.5*conf.sweep_span*2.0/conf.sweep_step)
-                                    plt.plot(chan_freqs[chan, half_span_arg], mags[chan, half_span_arg], 'x')
+                        if peak.size > 0:
+                                for peak in chan_peaks:
+                                        plt.plot(chan_freqs[chan, peak], mags[chan, peak], 'o')
+                        else:
+                                half_span_arg = int(0.5*conf.sweep_span*2.0/conf.sweep_step)
+                                plt.plot(chan_freqs[chan, half_span_arg], mags[chan, half_span_arg], 'x')
 
         #	plt.plot(tt_freqs[chan], np.min(mags[chan]), 'o')
         plt.title('Target sweep')
