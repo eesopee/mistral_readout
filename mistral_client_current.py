@@ -1589,6 +1589,7 @@ class roachInterface(object):
         plt.title('Target sweep')
         plt.xlabel('frequency (MHz)')
         plt.ylabel('dB')
+        plt.show()
         return
 
     def store_UDP_noavg(self, Npackets, LO_freq, save_path, skip_packets=2, channels = None):
@@ -2083,7 +2084,7 @@ class roachInterface(object):
                 if prompt == 'y':
                         self.target_sweep(sweep=True, do_plot=True)
                 else:
-                        self.target_sweep(plot=True, do_plot=True)
+                        self.target_sweep(do_plot=True)
 
                 print "Setting frequencies to the located values "
                 time.sleep(0.7)
