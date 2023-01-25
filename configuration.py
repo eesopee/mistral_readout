@@ -2,16 +2,16 @@ from pathlib import Path
 
 LO = 435. #local oscillator frequency in MHz
 
-sweep_step = 2.5e3 #step for the target sweep in Hz. Min=1.25 kHz. 
-sweep_span = 100.e3 #half span of the target sweep i.e. it goes from target-span to target+span
+sweep_step = 1.25e3 #step for the target sweep in Hz. Min=1.25 kHz. 
+sweep_span = 170.e3 #half span of the target sweep i.e. it goes from target-span to target+span
 
 roach_ip = '192.168.41.40' #ip of the Roach. Verify it with $arp0
 
 data_socket = Path("enp1s0f1") #data socket. NOT THE PPC SOCKET
 
 # default arduino attenuators values
-att_RFOUT = 8. #dB
-att_RFIN = 10. #dB
+att_RFOUT = 15. #dB
+att_RFIN = 20. #dB
 
 
 #valon_port = Path("/dev/ttyUSB") #port for the valon. 
