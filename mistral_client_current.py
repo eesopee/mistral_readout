@@ -1870,7 +1870,7 @@ class roachInterface(object):
         print '\t' + prompt + '\n'
         for i in range(len(options)):
             print '\t' +  '\033[32m' + str(i) + ' ..... ' '\033[0m' +  options[i] + '\n'
-        sys.stdout.write("Waiting for option")
+        sys.stdout.write("Waiting for option: ")
         opt = input()
         return opt
 
