@@ -2214,7 +2214,7 @@ class roachInterface(object):
                 path_current = True
             else:
                 path_current = False
-            ri.target_sweep(sweep=True, path_current=path_current)
+            ri.target_sweep(sweep=True, do_plot=True, path_current=path_current)
 
         if("do-vna" in sys.argv):
             print("vna")
