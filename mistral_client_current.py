@@ -1866,10 +1866,10 @@ class roachInterface(object):
         self.vi.simple_set_freq(0,freq)
         return
 
-    def menu(self,prompt,options):
-        #print '\t' + prompt + '\n'
-        #for i in range(len(options)):
-        #    print '\t' +  '\033[32m' + str(i) + ' ..... ' '\033[0m' +  options[i] + '\n'
+    def menu(self, prompt, options):
+        print '\t' + prompt + '\n'
+        for i in range(len(options)):
+            print '\t' +  '\033[32m' + str(i) + ' ..... ' '\033[0m' +  options[i] + '\n'
         sys.stdout.write("Waiting for option")
         opt = input()
         return opt
