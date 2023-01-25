@@ -1591,7 +1591,7 @@ class roachInterface(object):
                                 if peak.size > 0:
                                     plt.plot(chan_freqs[chan, peak], mags[chan, peak], 'o')
                                 else:
-                                    half_span_arg = int(0.5*self.span*2.0/self.step)
+                                    half_span_arg = int(0.5*conf.sweep_span*2.0/conf.sweep_step)
                                     plt.plot(chan_freqs[chan, half_span_arg], mags[chan, half_span_arg], 'x')
 
         #	plt.plot(tt_freqs[chan], np.min(mags[chan]), 'o')
