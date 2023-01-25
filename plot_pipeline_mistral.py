@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from build_menu import Console_interface
-from MISTRAL_pipeline_dev import pipeline
+from mistral_pipeline_dev import pipeline
 ci = Console_interface()
 p = pipeline()
 
