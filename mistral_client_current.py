@@ -1583,7 +1583,7 @@ class roachInterface(object):
                         #print new_targs[chan], tt_freqs_new[chan]
                         plt.plot(tt_freqs_new[chan], mags[chan,indexmin[chan]], 'o')
                 else:
-                        plt.plot(new_targs[chan]], np.argmin(mags[chan]), 'o')
+                        plt.plot(new_targs[chan], np.argmin(mags[chan]), 'o')
 
         #	plt.plot(tt_freqs[chan], np.min(mags[chan]), 'o')
         plt.title('Target sweep')
