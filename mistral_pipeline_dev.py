@@ -36,7 +36,7 @@ class pipeline(object):
         self.raw_I = I
         self.raw_Q = Q
         self.mag = np.abs(self.raw_chan)
-        self.target_freqs_out = np.zeros(self.nchan) 
+        #self.target_freqs_out = np.zeros(self.nchan) 
 
         print(self.mag.shape)
         nchannels = len(self.mag[0,:])
@@ -69,7 +69,7 @@ class pipeline(object):
             freqs_at_peak_sorted_diff = np.diff(freqs_at_peak_sorted)
             args_to_trash = np.argwhere(freqs_at_peak_sorted_diff < DELTA_FREQUENCY)
             if args_to_trash.size != 0:
-                channel_argpeak_freqpeak_sorted_new = np.delete(channel_argpeak_freqpeak_sorted, args_to_trash)
+                channel_argpeak_freqpeak_sorted_new = np.delete(channel_argpeak_freqpeak_sorted, args_to_trash, axis=0)
                 self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted_new])
             else:
                 self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted])
