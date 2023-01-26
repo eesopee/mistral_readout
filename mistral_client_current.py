@@ -1580,7 +1580,7 @@ class roachInterface(object):
             plt.plot(chan_freqs[int(channel), int(argpeak)], mags[int(channel), int(argpeak)], 'o')
         
         for freq,mag in zip(chan_freqs, mags):
-            plt.plot(freqs, mag, '-')
+            plt.plot(freq, mag, '-')
             
         '''
         # at this point the script finds the local minima
