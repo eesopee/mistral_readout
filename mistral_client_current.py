@@ -1552,8 +1552,9 @@ class roachInterface(object):
         tt_freqs_new = 0
         
         try:
-            tt_freqs_new = np.loadtxt(path + '/target_freqs_new.txt')
+            tt_freqs_new = np.loadtxt(path + '/target_freqs_new.dat')
             indexmin = np.load(path + '/index_freqs_new.npy')
+            channel_argpeak_freqpeak = np.loadtxt(path+"/channel_argpeak_freqpeak.dat")
             do_plot_new = 1
             sys.stdout.write('new frequencies read \n')
         except IOError:
@@ -1574,6 +1575,38 @@ class roachInterface(object):
         #bb_freqs = np.concatenate(bb_freqs[len(b_freqs)/2:],bb_freqs[:len(bb_freqs)/2]))
         #chan_freqs = np.concatenate((chan_freqs[len(chan_freqs)/2:],chan_freqs[:len(chan_freqs)/2]))
         
+        
+        channel_peaks = []
+
+        from scipy.signal import find_peaks
+        for channel in range(nchannels):
+            target_freq = self.target_freqs[channel]
+            freqs = target_freq + (self.lo_freqs - self.lo_freqs[0.5*n_sweep])/1.0e6 # MHz
+            # at this point the script finds the local minima
+            peaks, _ = find_peaks(-self.mag[:, channel], height=1.0, prominence=1.0)
+            if peaks.size > 0:
+                for peak in peaks:
+                    channel_peaks.append((channel, freqs[peak]))
+            else:
+                half_span_arg = int(0.5*freqs.size)
+                channel_peaks.append((channel, freqs[half_span_arg]))
+            
+            # check for double (or more) resonances in the same sweep
+            channel_peaks_sorted = sorted(channel_peaks, key=lambda x: x[1]) # sort tuples by frequency
+            freqs_at_peak_sorted = [f for (ch,f) in channel_peaks_sorted]
+            DELTA_FREQUENCY = 0.01 # MHz --> this is the minimum allowed frequency difference between two close peaks
+            freqs_at_peak_sorted_diff = np.diff(freqs_at_peak_sorted)
+            args_to_trash = np.argwhere(freqs_at_peak_sorted_diff < DELTA_FREQUENCY)
+            if args_to_trash.size != 0:
+                channel_peaks_sorted_new = np.delete(channel_peaks_sorted, args_to_trash)
+            self.target_freqs_out = np.array([f for (ch,f) in channel_peaks_sorted_new])
+        
+        
+        for (channel,argpeak,freqpeak) in channel_argpeak_freqpeak:
+            plt.plot(chan_freqs[channel, argpeak], mags[channel, argpeak], 'o')
+        
+        
+        '''
         # at this point the script finds the local minima
         from scipy.signal import find_peaks
         
@@ -1593,7 +1626,8 @@ class roachInterface(object):
                 else:
                     half_span_arg = int(0.5*conf.sweep_span*2.0/conf.sweep_step)
                     plt.plot(chan_freqs[chan, half_span_arg], mags[chan, half_span_arg], 'x')
-
+        '''
+        
         #	plt.plot(tt_freqs[chan], np.min(mags[chan]), 'o')
         plt.title('Target sweep')
         plt.xlabel('frequency (MHz)')

@@ -9,6 +9,7 @@ from scipy import optimize
 from scipy import signal
 from scipy import interpolate
 import time
+import raw_input
 
 y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
 
@@ -47,22 +48,33 @@ class pipeline(object):
         #self.minfreq = np.zeros(nchannels, dtype = float)
         #self.minfreqs = np.zeros(nchannels, dtype = float)
 
-        channel_peaks = []
+        channel_argpeak_freqpeak = []
 
         from scipy.signal import find_peaks
         for channel in range(nchannels):
             target_freq = self.target_freqs[channel]
-            freqs = target_freq + (self.lo_freqs - self.lo_freqs[0.5*n_sweep])/1.0e6
+            freqs = target_freq + (self.lo_freqs - self.lo_freqs[0.5*n_sweep])/1.0e6 # MHz
             # at this point the script finds the local minima
             peaks, _ = find_peaks(-self.mag[:, channel], height=1.0, prominence=1.0)
             if peaks.size > 0:
                 for peak in peaks:
-                    channel_peaks.append((channel, freqs[peak]))
+                    channel_argpeak_freqpeak.append((channel, peak, freqs[peak]))
             else:
                 half_span_arg = int(0.5*freqs.size)
-                channel_peaks.append((channel, freqs[half_span_arg]))
+                channel_argpeak_freqpeak.append((channel, half_span_arg, freqs[half_span_arg]))
             
-            '''
+            # check for double (or more) resonances in the same sweep
+            channel_argpeak_freqpeak_sorted = sorted(channel_argpeak_freqpeak, key=lambda x: x[2]) # sort tuples by frequency
+            freqs_at_peak_sorted = [f for (ch,arg,f) in channel_argpeak_freqpeak_sorted]
+            DELTA_FREQUENCY = 0.01 # MHz --> this is the minimum allowed frequency difference between two close peaks
+            freqs_at_peak_sorted_diff = np.diff(freqs_at_peak_sorted)
+            args_to_trash = np.argwhere(freqs_at_peak_sorted_diff < DELTA_FREQUENCY)
+            if args_to_trash.size != 0:
+                channel_argpeak_freqpeak_sorted_new = np.delete(channel_argpeak_freqpeak_sorted, args_to_trash)
+            self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted_new])
+            
+            
+            ################# queste cose vanno sistemate!
             indexmin = np.argmin(self.mag[:,channel])
             #self.freqs = self.lo_freqs + self.target_freqs[channel]
             #self.lo_min[channel] = np.average(self.lo_freqs*self.mag[:,channel])/np.sum(self.mag[:,channel])
@@ -73,10 +85,16 @@ class pipeline(object):
             self.minfreq = np.sum(self.mag[:,channel]*self.freqs)/np.sum(self.mag[:,channel])
             
             self.minfreqs[channel] = self.minfreq #tt + (self.minfreq-self.lo_freqs[n_sweep/2])/1e6                
-            self.target_freqs_out[channel] = target_freq + (self.lo_freqs[indexmin] - self.lo_freqs[n_sweep/2])/1.e6 #/2
-            print(channel, indexmin, self.target_freqs[channel] , self.target_freqs_out[channel])
+            #self.target_freqs_out[channel] = target_freq + (self.lo_freqs[indexmin] - self.lo_freqs[n_sweep/2])/1.e6 #/2
+            #print(channel, indexmin, self.target_freqs[channel] , self.target_freqs_out[channel])
             self.indexmin[channel] = indexmin
-            '''
+            ################# queste cose vanno sistemate!
+            
+            
+        # salvo provvisoriamente un file con una lista di (canale, index picco) utile per il plot
+        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt="%d\t%d\t%.18e", X=np.transpose(channel_argpeak_freqpeak_sorted))
+        
+        
 
         self.phase = np.angle(self.raw_chan)
         self.centers=self.loop_centers(self.raw_chan) # returns self.centers
@@ -232,7 +250,7 @@ class pipeline(object):
         #plt.clf()
         #print ' plotting ',chan,;sys.stdout.flush()
         return
-
+    
     def plot_targ(self, path):
         plt.ion()
         plt.figure(6)
