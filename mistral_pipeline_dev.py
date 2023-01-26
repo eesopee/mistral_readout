@@ -104,6 +104,7 @@ class pipeline(object):
 #        self.radii = np.absolute(self.chan_centered[self.chan_centered.shape[0]/2])
         self.rotations = np.zeros(nchannels, dtype = float)
         self.radii = np.zeros(nchannels, dtype = float)
+        self.radchannel = np.zeros(nchannels, dtype = float)
         print(self.indexmin.shape)
 #        print " ii, self.indexmin[ii], self.target_freqs_out[ii],self.rotations[ii],self.radii[ii], self.centers[ii]  " 
         print('ii, self.indexmin[ii], self.rotations[ii], np.angle(self.centers[ii]), delta angle')
