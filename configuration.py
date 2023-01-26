@@ -11,7 +11,7 @@ data_socket = Path("enp1s0f1") #data socket. NOT THE PPC SOCKET
 
 # default arduino attenuators values
 att_RFOUT = 15. #dB
-att_RFIN = 20. #dB
+att_RFIN = 17. #dB
 
 
 #valon_port = Path("/dev/ttyUSB") #port for the valon. 
