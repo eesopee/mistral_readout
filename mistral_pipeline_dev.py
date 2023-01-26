@@ -77,6 +77,7 @@ class pipeline(object):
             if args_to_trash.size != 0:
                 channel_argpeak_freqpeak_sorted_new = np.delete(channel_argpeak_freqpeak_sorted, args_to_trash, axis=0)
                 self.target_freqs_out = np.array([f for (ch,arg,f,f_type) in channel_argpeak_freqpeak_sorted_new])
+                channel_argpeak_freqpeak_sorted = channel_argpeak_freqpeak_sorted_new
             else:
                 self.target_freqs_out = np.array([f for (ch,arg,f,f_type) in channel_argpeak_freqpeak_sorted])
             
@@ -98,7 +99,7 @@ class pipeline(object):
             
             
         # salvo provvisoriamente un file con una lista di (canale, index picco) utile per il plot
-        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e','%d'], delimiter='\t', X=channel_argpeak_freqpeak_sorted_new)
+        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e','%d'], delimiter='\t', X=channel_argpeak_freqpeak_sorted)
         
         
 
