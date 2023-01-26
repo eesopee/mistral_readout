@@ -53,9 +53,14 @@ class pipeline(object):
         from scipy.signal import find_peaks
         for channel in range(nchannels):
             target_freq = self.target_freqs[channel]
+            
+            mag = self.mag[:,channel] / (2**31 - 1)
+            mag /= (((2**20) - 1) / (1024/2))
+            mag = 20*np.log10(mag)
+                
             freqs = target_freq + (self.lo_freqs - self.lo_freqs[n_sweep/2])/1.0e6 # MHz
             # at this point the script finds the local minima
-            peaks, _ = find_peaks(-self.mag[:, channel], height=0.5, prominence=0.5)
+            peaks, _ = find_peaks(-mag, height=1.0, prominence=1.0)
             if peaks.size > 0:
                 for peak in peaks:
                     channel_argpeak_freqpeak.append((channel, peak, freqs[peak], 1))
@@ -77,7 +82,7 @@ class pipeline(object):
             
             
             ################# queste cose vanno sistemate!
-            indexmin = np.argmin(self.mag[:,channel])
+            indexmin = np.argmin(mag)
             #self.freqs = self.lo_freqs + self.target_freqs[channel]
             #self.lo_min[channel] = np.average(self.lo_freqs*self.mag[:,channel])/np.sum(self.mag[:,channel])
 
