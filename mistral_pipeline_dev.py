@@ -47,6 +47,7 @@ class pipeline(object):
         #self.minfreq = np.zeros(nchannels, dtype = float)
         #self.minfreqs = np.zeros(nchannels, dtype = float)
 
+        # [channel, arg_peak, freq_peak, resonance_type]
         channel_argpeak_freqpeak = []
 
         from scipy.signal import find_peaks
@@ -54,25 +55,25 @@ class pipeline(object):
             target_freq = self.target_freqs[channel]
             freqs = target_freq + (self.lo_freqs - self.lo_freqs[n_sweep/2])/1.0e6 # MHz
             # at this point the script finds the local minima
-            peaks, _ = find_peaks(-self.mag[:, channel], height=1.0, prominence=1.0)
+            peaks, _ = find_peaks(-self.mag[:, channel], height=0.5, prominence=0.5)
             if peaks.size > 0:
                 for peak in peaks:
-                    channel_argpeak_freqpeak.append((channel, peak, freqs[peak]))
+                    channel_argpeak_freqpeak.append((channel, peak, freqs[peak], 1))
             else:
                 half_span_arg = int(0.5*freqs.size)
-                channel_argpeak_freqpeak.append((channel, half_span_arg, freqs[half_span_arg]))
+                channel_argpeak_freqpeak.append((channel, half_span_arg, freqs[half_span_arg], 0))
             
             # check for double (or more) resonances in the same sweep
             channel_argpeak_freqpeak_sorted = sorted(channel_argpeak_freqpeak, key=lambda x: x[2]) # sort tuples by frequency
-            freqs_at_peak_sorted = [f for (ch,arg,f) in channel_argpeak_freqpeak_sorted]
+            freqs_at_peak_sorted = [f for (ch,arg,f,f_type) in channel_argpeak_freqpeak_sorted]
             DELTA_FREQUENCY = 0.02 # MHz --> this is the minimum allowed frequency difference between two close peaks
             freqs_at_peak_sorted_diff = np.diff(freqs_at_peak_sorted)
             args_to_trash = np.argwhere(freqs_at_peak_sorted_diff < DELTA_FREQUENCY)
             if args_to_trash.size != 0:
                 channel_argpeak_freqpeak_sorted_new = np.delete(channel_argpeak_freqpeak_sorted, args_to_trash, axis=0)
-                self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted_new])
+                self.target_freqs_out = np.array([f for (ch,arg,f,f_type) in channel_argpeak_freqpeak_sorted_new])
             else:
-                self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted])
+                self.target_freqs_out = np.array([f for (ch,arg,f,f_type) in channel_argpeak_freqpeak_sorted])
             
             
             ################# queste cose vanno sistemate!
@@ -92,7 +93,7 @@ class pipeline(object):
             
             
         # salvo provvisoriamente un file con una lista di (canale, index picco) utile per il plot
-        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e'], delimiter='\t', X=channel_argpeak_freqpeak_sorted)
+        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e','%d'], delimiter='\t', X=channel_argpeak_freqpeak_sorted)
         
         
 

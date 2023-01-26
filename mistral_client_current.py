@@ -1575,12 +1575,19 @@ class roachInterface(object):
         #bb_freqs = np.concatenate(bb_freqs[len(b_freqs)/2:],bb_freqs[:len(bb_freqs)/2]))
         #chan_freqs = np.concatenate((chan_freqs[len(chan_freqs)/2:],chan_freqs[:len(chan_freqs)/2]))
         
+        from matplotlib import cm
+        cmap = cm.get_cmap('jet', lut=None)
+        resonance_depths = np.array([max(mag)-min(mag) for mag in mags]) 
+        colors = (resonance_depths-resonance_depths.min())/(resonance_depths.max()-resonance_depths.min())
         
-        for (channel,argpeak,freqpeak) in channel_argpeak_freqpeak:
-            plt.plot(chan_freqs[int(channel), int(argpeak)], mags[int(channel), int(argpeak)], 'o')
+        for (channel,argpeak,freqpeak,f_type) in channel_argpeak_freqpeak:
+            if f_type == 1:
+                plt.plot(chan_freqs[int(channel), int(argpeak)], mags[int(channel), int(argpeak)], 'o') # peak detected
+            if f_type == 0:
+                plt.plot(chan_freqs[int(channel), int(argpeak)], mags[int(channel), int(argpeak)], 'x') # center span guess
         
-        for freq,mag in zip(chan_freqs, mags):
-            plt.plot(freq, mag, '-')
+        for freq,mag,color in zip(chan_freqs, mags, colors):
+            plt.plot(freq, mag, linestyle='-', color=cmap(color))
             
         '''
         # at this point the script finds the local minima
