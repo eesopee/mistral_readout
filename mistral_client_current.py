@@ -1579,7 +1579,7 @@ class roachInterface(object):
         channel_peaks = []
 
         from scipy.signal import find_peaks
-        for channel in range(nchannels):
+        for channel in range(channels):
             target_freq = self.target_freqs[channel]
             freqs = target_freq + (self.lo_freqs - self.lo_freqs[0.5*n_sweep])/1.0e6 # MHz
             # at this point the script finds the local minima
