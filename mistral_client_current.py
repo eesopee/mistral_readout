@@ -1577,7 +1577,7 @@ class roachInterface(object):
         
         
         for (channel,argpeak,freqpeak) in channel_argpeak_freqpeak:
-            plt.plot(chan_freqs[channel, argpeak], mags[channel, argpeak], 'o')
+            plt.plot(chan_freqs[int(channel), int(argpeak)], mags[int(channel), int(argpeak)], 'o')
         
         
         '''
