@@ -65,12 +65,14 @@ class pipeline(object):
             # check for double (or more) resonances in the same sweep
             channel_argpeak_freqpeak_sorted = sorted(channel_argpeak_freqpeak, key=lambda x: x[2]) # sort tuples by frequency
             freqs_at_peak_sorted = [f for (ch,arg,f) in channel_argpeak_freqpeak_sorted]
-            DELTA_FREQUENCY = 0.01 # MHz --> this is the minimum allowed frequency difference between two close peaks
+            DELTA_FREQUENCY = 0.02 # MHz --> this is the minimum allowed frequency difference between two close peaks
             freqs_at_peak_sorted_diff = np.diff(freqs_at_peak_sorted)
             args_to_trash = np.argwhere(freqs_at_peak_sorted_diff < DELTA_FREQUENCY)
             if args_to_trash.size != 0:
                 channel_argpeak_freqpeak_sorted_new = np.delete(channel_argpeak_freqpeak_sorted, args_to_trash)
-            self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted_new])
+                self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted_new])
+            else:
+                self.target_freqs_out = np.array([f for (ch,arg,f) in channel_argpeak_freqpeak_sorted])
             
             
             ################# queste cose vanno sistemate!
