@@ -52,7 +52,7 @@ class pipeline(object):
         from scipy.signal import find_peaks
         for channel in range(nchannels):
             target_freq = self.target_freqs[channel]
-            freqs = target_freq + (self.lo_freqs - self.lo_freqs[0.5*n_sweep])/1.0e6 # MHz
+            freqs = target_freq + (self.lo_freqs - self.lo_freqs[int(0.5*n_sweep)])/1.0e6 # MHz
             # at this point the script finds the local minima
             peaks, _ = find_peaks(-self.mag[:, channel], height=1.0, prominence=1.0)
             if peaks.size > 0:
