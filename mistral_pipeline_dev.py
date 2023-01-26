@@ -9,7 +9,6 @@ from scipy import optimize
 from scipy import signal
 from scipy import interpolate
 import time
-import raw_input
 
 y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
 
