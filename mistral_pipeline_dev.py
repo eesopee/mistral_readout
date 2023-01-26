@@ -43,9 +43,9 @@ class pipeline(object):
         n_sweep = len(self.mag[:,0])
         print('nchannels ', nchannels, 'self.nchan ', self.nchan)
 
-        #self.indexmin = np.zeros(nchannels, dtype = int)
-        #self.minfreq = np.zeros(nchannels, dtype = float)
-        #self.minfreqs = np.zeros(nchannels, dtype = float)
+        self.indexmin = np.zeros(nchannels, dtype = int)
+        self.minfreq = np.zeros(nchannels, dtype = float)
+        self.minfreqs = np.zeros(nchannels, dtype = float)
 
         channel_argpeak_freqpeak = []
 
