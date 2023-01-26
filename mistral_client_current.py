@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#import matplotlib
+import matplotlib
 import time
 import struct
 import numpy as np
@@ -25,12 +25,12 @@ np.set_printoptions(threshold=np.nan)
 #matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import casperfpga 
-#import corr
+import corr
 from myQdr import Qdr as myQdr
-#import types
-#import logging
+import types
+import logging
 #import threading
-#import glob  
+import glob  
 import os
 import sys
 import valon_synth9 as valon_synth
@@ -39,7 +39,7 @@ from socket import *
 from scipy import signal
 #import find_kids_olimpo as fk 
 import find_kids_mistral_new as fk
-#import subprocess
+import subprocess
 #from olimpo_pipeline import pipeline
 from mistral_pipeline_dev import pipeline
 import tqdm
