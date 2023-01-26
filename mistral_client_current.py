@@ -1579,7 +1579,9 @@ class roachInterface(object):
         for (channel,argpeak,freqpeak) in channel_argpeak_freqpeak:
             plt.plot(chan_freqs[int(channel), int(argpeak)], mags[int(channel), int(argpeak)], 'o')
         
-        
+        for freq,mag in zip(chan_freqs, mags):
+            plt.plot(freqs, mag, '-')
+            
         '''
         # at this point the script finds the local minima
         from scipy.signal import find_peaks
