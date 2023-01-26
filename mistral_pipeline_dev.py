@@ -98,7 +98,7 @@ class pipeline(object):
             
             
         # salvo provvisoriamente un file con una lista di (canale, index picco) utile per il plot
-        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e','%d'], delimiter='\t', X=channel_argpeak_freqpeak_sorted)
+        np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e','%d'], delimiter='\t', X=channel_argpeak_freqpeak_sorted_new)
         
         
 
