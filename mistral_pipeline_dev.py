@@ -83,13 +83,13 @@ class pipeline(object):
             
             ################# queste cose vanno sistemate!
             indexmin = np.argmin(mag)
-            self.freqs = self.lo_freqs + self.target_freqs[channel]
-            self.lo_min[channel] = np.average(self.lo_freqs*self.mag[:,channel])/np.sum(self.mag[:,channel])
+            #self.freqs = self.lo_freqs + self.target_freqs[channel]
+            #self.lo_min[channel] = np.average(self.lo_freqs*self.mag[:,channel])/np.sum(self.mag[:,channel])
 
-            target_freq = self.target_freqs[channel]
-            self.freqs = target_freq + (self.lo_freqs - self.lo_freqs[n_sweep/2])/1e6
+            #target_freq = self.target_freqs[channel]
+            #self.freqs = target_freq + (self.lo_freqs - self.lo_freqs[n_sweep/2])/1e6
 
-            self.minfreqs[channel] = np.sum(self.mag[:,channel]*self.freqs)/np.sum(self.mag[:,channel])
+            self.minfreqs[channel] = np.sum(self.mag[:,channel]*freqs)/np.sum(self.mag[:,channel])
             #self.minfreqs[channel] = minfreq #tt + (self.minfreq-self.lo_freqs[n_sweep/2])/1e6                
             #self.target_freqs_out[channel] = target_freq + (self.lo_freqs[indexmin] - self.lo_freqs[n_sweep/2])/1.e6 #/2
             #print(channel, indexmin, self.target_freqs[channel] , self.target_freqs_out[channel])
