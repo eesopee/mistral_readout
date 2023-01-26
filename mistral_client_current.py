@@ -1867,10 +1867,10 @@ class roachInterface(object):
         return
 
     def menu(self,prompt,options):
-        #print '\t' + prompt + '\n'
-        #for i in range(len(options)):
-        #    print '\t' +  '\033[32m' + str(i) + ' ..... ' '\033[0m' +  options[i] + '\n'
-        sys.stdout.write("Waiting for option")
+        print '\t' + prompt + '\n'
+        for i in range(len(options)):
+            print '\t' +  '\033[32m' + str(i) + ' ..... ' '\033[0m' +  options[i] + '\n'
+        sys.stdout.write("Waiting for option: ")
         opt = input()
         return opt
 
@@ -2081,7 +2081,7 @@ class roachInterface(object):
             if opt == 7:
                 prompt = raw_input('Do sweep? (y/n) ')
                 if prompt == 'y':
-                        self.target_sweep(sweep = True)
+                        self.target_sweep(sweep = True, do_plot=True)
                 else:
                         self.target_sweep()
 
