@@ -1832,29 +1832,24 @@ class roachInterface(object):
         format_file = open(formatname, 'w')
         for i in range(len(self.radii)):
 
-                format_file.write( 'chC_'+str(i).zfill(3)+' LINCOM   ch_'+str(i).zfill(3)+' 1  '+str(-I_center[i])+';'+str(-Q_center[i])+' # centered \n')
-                format_file.write('chCR_'+str(i).zfill(3)+' LINCOM  chC_'+str(i).zfill(3)+' '+str(cosi[i])+';'+str(sini[i])+'   0  # centered and rotated \n') 
-                format_file.write('chCr_'+str(i).zfill(3)+' LINCOM chCR_'+str(i).zfill(3)+' '+str(1/self.radii[i])+'   0 #centered, rotated and scaled   \n')
-                format_file.write( 'chi_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.r   0  # I centered \n')
-                format_file.write( 'chq_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.i   0  # Q centered \n')
-                format_file.write( 'chp_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.a   0  # Phase \n')
-                format_file.write( 'cha_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.m   0  # Magnitude \n \n')
+            format_file.write( 'chC_'+str(i).zfill(3)+' LINCOM   ch_'+str(i).zfill(3)+' 1  '+str(-I_center[i])+';'+str(-Q_center[i])+' # centered \n')
+            format_file.write('chCR_'+str(i).zfill(3)+' LINCOM  chC_'+str(i).zfill(3)+' '+str(cosi[i])+';'+str(sini[i])+'   0  # centered and rotated \n') 
+            format_file.write('chCr_'+str(i).zfill(3)+' LINCOM chCR_'+str(i).zfill(3)+' '+str(1/self.radii[i])+'   0 #centered, rotated and scaled   \n')
+            format_file.write( 'chi_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.r   0  # I centered \n')
+            format_file.write( 'chq_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.i   0  # Q centered \n')
+            format_file.write( 'chp_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.a   0  # Phase \n')
+            format_file.write( 'cha_'+str(i).zfill(3)+' PHASE  '+'chCr_'+str(i).zfill(3)+'.m   0  # Magnitude \n \n')
                 
         format_file.close()
         return
 
 
     def make_format(self, path_current = False):
-        if path_current:
-                formatname = self.datadir.as_posix()+'/format_extra'
-                freqs = self.cold_array_bb/1.e6+self.center_freq/self.divconst
-        else:
-                file_resonances = raw_input('Absolute path to a list of resonances basebands (e.g. /home/data/olimpo/setup/kids/sweeps/target/current/bb_freqs.npy) ? ')
-
-                freqs = np.load(file_resonances)/1.e6+self.center_freq/self.divconst
-                folder_dirfile = raw_input('Dirfile folder (e.g. /home/data/olimpo/data_logger/log_kids/) ? ')
-                formatname = os.path.join(folder_dirfile,'format_extra')
-
+    
+        freqs = np.load(file_resonances)/1.e6+self.center_freq/self.divconst
+        folder_dirfile = raw_input('Dirfile folder (e.g. /home/data/olimpo/data_logger/log_kids/) ? ')
+        formatname = os.path.join(folder_dirfile,'format_extra')
+        
         print("saving freqs format in ", formatname)
         ftrunc = np.hstack(freqs.astype(int))
         format_file = open(formatname, 'w')
