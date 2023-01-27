@@ -98,10 +98,12 @@ class pipeline(object):
             ################# queste cose vanno sistemate!
             
             
-        # salvo provvisoriamente un file con una lista di (canale, index picco) utile per il plot
+        # salvo provvisoriamente un file con una lista di (canale, index picco, freq picco, 1:risonanza/0:tono a vuoto) utile per il plot
         np.savetxt(fname=self.targ_path+"/channel_argpeak_freqpeak.dat", fmt=['%d','%d','%.18e','%d'], delimiter='\t', X=channel_argpeak_freqpeak_sorted)
         
+        self.phase = []
         for (ch,arg,f,f_type) in channel_argpeak_freqpeak_sorted:
+            self.phase.append(np.angle(self.raw_chan[arg]))
             
 
         self.phase = np.angle(self.raw_chan)
