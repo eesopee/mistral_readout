@@ -93,6 +93,7 @@ class roachInterface(object):
         self.ip = conf.roach_ip
         self.center_freq = conf.LO
         self.global_attenuation= 1.0 #need to implement the class for Arduino variable attenuator!
+        self.baseline_attenuation = conf.baseline_attenuation
         self.wavemax = 1.1543e-5 #what is this? Maybe we should increase it for 400 tones.
         
         self.zeros = signal.firwin(27, 1.5e6, window="hanning", nyq=128.0e6)
@@ -393,20 +394,25 @@ class roachInterface(object):
         return shift
 
     def freq_comb(self, freqs, samp_freq, resolution, random_phase = True, DAC_LUT = True, apply_transfunc = False):
-    # Generates a frequency comb for the DAC or DDS look-up-tables. DAC_LUT = True for the DAC LUT. Returns I and Q 
+        # Generates a frequency comb for the DAC or DDS look-up-tables. DAC_LUT = True for the DAC LUT. Returns I and Q 
+        
         freqs = np.round(freqs/self.dac_freq_res)*self.dac_freq_res
+        
         amp_full_scale = (2**15 - 1)
+        
         if DAC_LUT:
-            print 'freq comb uses DAC_LUT'
+            
+            print('freq comb uses DAC_LUT')
+            
             fft_len = self.LUTbuffer_len
             bins = self.fft_bin_index(freqs, fft_len, samp_freq)
             #np.random.seed(333)
             #phase = np.random.uniform(0., 2.*np.pi, len(bins))   #### ATTENZIONE PHASE A pi (ORA NO)
             phase = self.phases[0:len(bins)]
-
+            
+            
             if apply_transfunc:
                 self.amps = self.get_transfunc(path_current = True)
-            
             else:
                 try:
                     if self.target_sweep_flag == True:
@@ -414,12 +420,13 @@ class roachInterface(object):
                     if self.test_comb_flag == True:
                         self.amps = self.test_comb_amps
                 except: 
-                    self.amps = np.ones(len(self.target_freqs))
+                    self.amps = np.ones(len(freqs))
                     #self.amps = np.array([1.]*len(bins)) #va commentato per impostare le attenuazioni 
+
 
             ######POTENZE DIVERSE PER ARRAY DIVERSI: 200 E 350 GHz NEL DILUIZIONE 8-08-17##################	
             #tmp, self.amps = np.loadtxt(os.path.join(self.folder_frequencies, 'target_freqs.dat'), unpack=True)COMMENTO BY ALE P.
-            print self.amps
+            #print self.amps
             # di seguito per applicare potenza diverse per array
 #	    if !self.roach2:
 ##		ROACH2
@@ -431,7 +438,6 @@ class roachInterface(object):
 
             if len(bins) != len(self.amps): self.amps=1
 
-
             if not random_phase:
                 phase = np.load('/mnt/iqstream/last_phases.npy') 
 
@@ -441,8 +447,10 @@ class roachInterface(object):
             waveMax = np.max(np.abs(wave))
             waveMax = self.wavemax
             print "waveMax",waveMax, "attenuation",self.global_attenuation
+            
             I = (wave.real/waveMax)*(amp_full_scale)*self.global_attenuation  
             Q = (wave.imag/waveMax)*(amp_full_scale)*self.global_attenuation  
+            
             #wave = signal.convolve(wave,np.hanning(3), mode = 'same')
             #	    Q = np.roll(Q,1)
         else:
@@ -491,6 +499,7 @@ class roachInterface(object):
                 self.I_dac, self.Q_dac = self.freq_comb(freqs, self.dac_samp_freq, self.dac_freq_res, random_phase = True, apply_transfunc = True)
         else:
                 self.I_dac, self.Q_dac = self.freq_comb(freqs, self.dac_samp_freq, self.dac_freq_res, random_phase = True)
+
         self.I_dds, self.Q_dds = self.define_DDS_LUT(freqs)
         self.I_lut, self.Q_lut = np.zeros(self.LUTbuffer_len*2), np.zeros(self.LUTbuffer_len*2)
         self.I_lut[0::4] = self.I_dac[1::2]         
@@ -560,9 +569,8 @@ class roachInterface(object):
 
         np.savetxt(path,np.transpose(freqs))
 
-    def calc_transfunc(self, path):
-
-
+    def calc_transfunc(self, freqs):
+    
         '''
         Da modificare:
         - Overfittare la funzione di trasferimento. O con un poly di grado superiore o con interpolazione
@@ -570,35 +578,35 @@ class roachInterface(object):
         '''
 
         self.transfunc_parameters_file = "/home/mistral/src/mistral_readout_dev/transfunc_polyfit_coefficients.npy"
-
+        #ricordati di mettere il file dei coefficienti in mistral_readout
 
 
         poly_par = np.load(self.transfunc_parameters_file)
 
-        self.baseline_attenuation = -44.8  #dBm
-
-        freqs = np.loadtxt(path, unpack=True, usecols=(0))
-
         attenuations = np.poly1d(poly_par)(freqs)
+
         print("prima di 10**")
         print(attenuations)
         attenuations = 10.**((self.baseline_attenuation-attenuations)/20.)
-
+        
+        attenuations[0:15] = 1
 
         print(attenuations)
         bad_attenuations = np.argwhere(np.floor(attenuations))
         print("Checking for bad attenuations")
         print(bad_attenuations)
+
         if bad_attenuations.size > 0:
             print("Warning: invalid attenuations found. Setting them to 1.0 by default.")
             attenuations[bad_attenuations] = 1.0
-
-
+        
         table = np.array([freqs,attenuations])
 
-        np.savetxt(path,np.transpose(table)) 
+        #np.savetxt(path,np.transpose(table)) 
 
-        print(attenuations)
+        #print(attenuations)
+
+        self.amps = attenuations
 
         '''
         for f in freqs:
@@ -1340,7 +1348,7 @@ class roachInterface(object):
         '''
         self.target_sweep_flag = True
         target_path = self.setupdir.as_posix()+'/sweeps/target/' 
-        center_freq = self.center_freq*1.e6
+        center_freq = self.center_freq * 1.e6 + conf.sweep_offset #Center frequ is in MHz, offset is in Hz
         
         if path_current == True:
                 vna_path = self.setupdir.as_posix()+'/sweeps/target/current'
@@ -1372,6 +1380,7 @@ class roachInterface(object):
 
         try:
             self.target_freqs = np.loadtxt(vna_path + '/target_freqs_new.dat')
+            
         except IOError:
             print("Failed to load target_freqs_new. Trying with target_freqs.dat")
             try:
@@ -1380,6 +1389,8 @@ class roachInterface(object):
             except:
                 self.target_freqs= np.loadtxt(os.path.join(vna_path, 'target_freqs.dat'), unpack=True)
                 print("Loaded target_freqs file without amps")
+        
+        self.calc_transfunc(freqs=self.target_freqs)
 
         save_path = os.path.join(target_path, sweep_dir)
         self.path_configuration = save_path
@@ -1418,9 +1429,9 @@ class roachInterface(object):
         
         self.bb_target_freqs = ((self.target_freqs*1.0e6) - center_freq)
         upconvert = (self.bb_target_freqs + center_freq)/1.0e6
-        print "RF tones =", upconvert
+        print("RF tones =", upconvert)
         self.v1.set_frequency(2,center_freq / (1.0e6), 0.01) # LO
-        print '\nTarget baseband freqs (MHz) =', self.bb_target_freqs/1.0e6
+        print("\nTarget baseband freqs (MHz) =", self.bb_target_freqs/1.0e6)
         
         span = conf.sweep_span #200.0e3   #era 400.e3             # era 1000.e3 #era 400.e3 20170803
         start = center_freq - (span)  # era (span/2)
@@ -1438,14 +1449,13 @@ class roachInterface(object):
         np.savetxt(save_path + "/bb_freqs.dat", self.bb_target_freqs)
         np.savetxt(save_path + "/sweep_freqs.dat", sweep_freqs)
 
-        if write:
+        if write==True:
                 if self.do_transf == True:
                 #self.writeQDR(self.bb_target_freqs)
                         self.writeQDR(self.bb_target_freqs, transfunc=True)
                 else:
                         self.writeQDR(self.bb_target_freqs)
-        if sweep:
-
+        if sweep==True:
             for freq in tqdm.tqdm(sweep_freqs):
                 if self.v1.set_frequency(2, freq/1.0e6, 0.01):
                     self.store_UDP(100,freq,save_path,channels=len(self.bb_target_freqs)) 

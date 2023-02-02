@@ -173,13 +173,14 @@ class pipeline(object):
 
     def plot_loop_raw(self,chan):
         print self.raw_chan.real[self.indexmin[chan],chan], self.raw_chan.imag[self.indexmin[chan],chan]
-        plt.plot(self.raw_chan.real[:,chan],self.raw_chan.imag[:,chan],'x',color=self.cm[chan])
+        plt.plot(self.raw_chan.real[:,chan],self.raw_chan.imag[:,chan],'x',linestyle='-',color=self.cm[chan])
 	#plt.plot(self.centers[0,chan],self.centers[1,chan], 'o', color = 'green')
-
+        plt.axvline(0.0, linestyle='dashed', color='gray', alpha=0.4)
+        plt.axhline(0.0, linestyle='dashed', color='gray', alpha=0.4)
         plt.gca().set_aspect('equal')
 	plt.plot(self.raw_chan.real[self.indexmin[chan],chan], self.raw_chan.imag[self.indexmin[chan],chan], 'o', color='red')
-        plt.xlim(np.std(self.raw_chan.real[:,chan])*-3.,np.std(self.raw_chan.real[:,chan]*3))
-        plt.ylim(np.std(self.raw_chan.imag[:,chan])*-3.,np.std(self.raw_chan.imag[:,chan]*3))
+        #plt.xlim(np.std(self.raw_chan.real[:,chan])*-3.,np.std(self.raw_chan.real[:,chan]*3))
+        #plt.ylim(np.std(self.raw_chan.imag[:,chan])*-3.,np.std(self.raw_chan.imag[:,chan]*3))
         plt.tight_layout()
 	plt.show()
         return
