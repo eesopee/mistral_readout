@@ -53,6 +53,8 @@ class roachInterface(object):
 
         self.do_transf = False #provvisorio! Da sistemare.
         self.test_comb_flag = False
+        
+        self.test_comb, self.delta = np.linspace(-256.e6, 256.e6, num=400, retstep = True)
 
         '''	
         Filename
@@ -1296,25 +1298,25 @@ class roachInterface(object):
         '''
 
         center_freq = self.center_freq*1.e6
-        sweep_path = self.setupdir+"sweeps/vna/"
+        sweep_path = self.setupdir / "sweeps" / "vna"
         
         if path_current:
 #		self.timestring = "%04d%02d%02d_%02d%02d%02d" % (time.localtime()[0],time.localtime()[1], time.localtime()[2], time.localtime()[3], time.localtime()[4], time.localtime()[5])
                 sweep_dir = self.timestring
         else:
-                sweep_dir = raw_input('Insert new VNA sweep dir (e.g. 161020_01): ')
+                sweep_dir = Path(raw_input('Insert new VNA sweep dir (e.g. 161020_01): '))
         
-        save_path = os.path.join(sweep_path, sweep_dir)
+        save_path = os.path.join(sweep_path.as_posix(), sweep_dir.as_posix())
         try:
                 os.mkdir(save_path)
         except OSError:
                 pass
-        command_cleanlink = "rm -f "+sweep_path+'current'
+        command_cleanlink = "rm -f "+sweep_path.as_posix()+'current'
         os.system(command_cleanlink)
-        command_linkfile = "ln -f -s " + save_path +" "+ sweep_path+'current'
+        command_linkfile = "ln -f -s " + save_path +" "+ sweep_path.as_posix() + 'current'
         os.system(command_linkfile)
         self.v1.set_frequency(2, center_freq/1.0e6, 0.01)
-        span = self.neg_delta
+        span = self.delta
 
         start = center_freq - (span/2)   # era (span/2)
         stop  = center_freq + (span/2)   # era (span/2)
@@ -1324,6 +1326,9 @@ class roachInterface(object):
         print "LO freqs =", self.sweep_freqs
         np.save(save_path + '/bb_freqs.npy',self.test_comb)
         np.save(save_path + '/sweep_freqs.npy',self.sweep_freqs)
+        
+        self.calc_transfunc(self.test_comb)
+
         if write:
                 self.writeQDR(self.test_comb)
         if sweep:
@@ -2081,7 +2086,7 @@ class roachInterface(object):
             if opt == 5:
                 prompt = raw_input('Do sweep? (y/n) ')
                 if prompt == 'y':
-                        self.vna_sweep(sweep = True)
+                        self.vna_sweep(sweep = True, write = True)
                 else:
                         self.vna_sweep()
             if opt == 6:

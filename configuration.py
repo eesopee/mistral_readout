@@ -3,8 +3,8 @@ from pathlib import Path
 LO =  435. #local oscillator frequency in MHz
 
 sweep_step = 1.25e3 #step for the target sweep in Hz. Min=1.25 kHz. 
-sweep_span = 70.e3 #half span of the target sweep i.e. it goes from target-span to target+span
-sweep_offset = -0e3 #frequency offset for the target sweep.
+sweep_span = 650.e3 #half span of the target sweep i.e. it goes from target-span to target+span
+sweep_offset = 0.0 #frequency offset for the target sweep.
 
 roach_ip = '192.168.41.40' #ip of the Roach. Verify it with $arp0
 
