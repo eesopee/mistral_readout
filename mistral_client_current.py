@@ -54,7 +54,7 @@ class roachInterface(object):
         self.do_transf = False #provvisorio! Da sistemare.
         self.test_comb_flag = False
         
-        self.test_comb, self.delta = np.linspace(-256.e6, 256.e6, num=400, retstep = True)
+        self.test_comb, self.delta = np.linspace(-256.e6, 256.e6, num=500, retstep = True)
 
         '''	
         Filename
@@ -107,7 +107,6 @@ class roachInterface(object):
         '''
         VALON SETUP
         '''
-        print("Setting up VALON")
 
         '''
         For some god forsaken reason, the VALON changes serial port. Here we cycle through the serial ports until it connects and sets the LO frequency correctly.
@@ -115,7 +114,6 @@ class roachInterface(object):
         
         # connecting to valon and variable attenuator
         if "skip-serial" not in sys.argv:
-
             self.connect_to_valon(set_to_default = True)
             self.connect_to_arduino(set_to_default = True)
         else:
@@ -179,6 +177,8 @@ class roachInterface(object):
 
         '''
         
+        print("Connecting to VALON")
+
         for i in range(10):
             time.sleep(0.5)
             try:
@@ -191,9 +191,14 @@ class roachInterface(object):
                     self.v1.set_frequency(1, 512.,0.01)
                 sys.stdout.write("Success!\n")
                 sys.stdout.write("Valon connected at port "+self.valon_port.as_posix()+"\n")
-                
+                sys.stdout.write("Current synth freqs:\n")
+                sys.stdout.write("Synth1=\n")
+                sys.stdout.write(str(self.v1.get_frequency(1))+"\n")
+                sys.stdout.write("Synth2=\n")
+                sys.stdout.write(str(self.v1.get_frequency(2))+"\n")
                 break
             
+
             except OSError:
                 if i == 9:
                     print("too many failed attempts")
@@ -223,13 +228,21 @@ class roachInterface(object):
                 self.att = vatt.Attenuator(self.arduino_port.as_posix())
                 
                 if set_to_default == True:
+                    sys.stdout.write("Checking startup attenuations:\n")
                     atts = self.att.get_att()
-                    print("Current attenuation = ", atts)
+                    sys.stdout.write("(RF_OUT, RF_IN) = "+str(self.att.get_att())+"\n")
                     sys.stdout.write("Success!\n")
                     sys.stdout.write("Attenuator connected at port "+self.arduino_port.as_posix()+"\n")
-                    sys.stdout.write("Setting default attenuations")
-                    self.att.set_att(1, conf.att_RFOUT)
-                    self.att.set_att(2, conf.att_RFIN)
+                    sys.stdout.write("Setting configuration attenuations")
+                    
+                    while atts[0] != conf.att_RFOUT or atts[1] != conf.att_RFIN:
+                        
+
+
+                        self.att.set_att(1, conf.att_RFOUT)
+                        self.att.set_att(2, conf.att_RFIN)
+                        atts = self.att.get_att()
+                    
                     sys.stdout.write("(RF_OUT, RF_IN) = " + str(self.att.get_att())+"\n")
                 break
            
@@ -245,7 +258,8 @@ class roachInterface(object):
             
 
     def array_configuration(self):	
-#	self.path_configuration = '/home/data/olimpo/setup/kids/sweeps/target/current/'
+        if "current" in sys.argv:
+            self.path_configuration = '/home/data/mistral/setup/kids/sweeps/target/current/'
 
         sys.stdout.write("setting freqs, centers, radii and rotations from %s \n " %self.path_configuration)
         try:
@@ -917,7 +931,15 @@ class roachInterface(object):
         os.system(command_linkfile)
         shutil.copy(self.datadir.as_posix() + "/format_complex", save_path + "/format")
         shutil.copy(self.datadir.as_posix() + "/format_extra", save_path + "/format_extra")
+        
+        '''
+        make_format_complex fa un format con 415 canali sempre. Perche'?
+        make_format_complex funziona. Fa un format con n canali. 
+        Il problema e' format, che ne fa solo 415 dato che li copia. Serve un make_format
+        '''
+
         self.make_format_complex()
+        
         shutil.copy(self.datadir.as_posix() + "/format_complex_extra", save_path + "/format_complex_extra")
         nfo_I = map(lambda x: save_path + "/chI_" + str(x).zfill(3), range(nchannel))
         nfo_Q = map(lambda y: save_path + "/chQ_" + str(y).zfill(3), range(nchannel))
@@ -1351,6 +1373,7 @@ class roachInterface(object):
         '''
         Function used for tuning. It spans a small range of frequencies around known resonances.
         '''
+        
         self.target_sweep_flag = True
         target_path = self.setupdir.as_posix()+'/sweeps/target/' 
         center_freq = self.center_freq * 1.e6 + conf.sweep_offset #Center frequ is in MHz, offset is in Hz
@@ -1361,13 +1384,6 @@ class roachInterface(object):
                 print("Target sweep with current parameters:", vna_path)
                 print("Default sweep_dir:", sweep_dir)
         else:
-            #print "Mistral:    /home/olimpo/src/parameters/Mistral_prot"
-            #print "150-480: /home/olimpo/src/parameters/OLIMPO_150_480_VOLO" 
-            #print "200-350: /home/olimpo/src/parameters/OLIMPO_200_350_VOLO"
-            #print "ASI:    /home/olimpo/src/parameters/ASI_KIDS_300mK"
-            #print "MISTRAL:    /home/olimpo/src/parameters/Mistral_prot2_opt"
-            #print "finto kid:    /home/olimpo/src/parameters/prova_finto_kid"
-            #print "current: /home/data/olimpo/setup/kids2/sweeps/target/current"
             print "roach415: /home/mistral/src/parameters/roach415"  
             print "current: /data/mistral/setup/kids/sweeps/target/current"
             print "roach_test: /home/mistral/src/parameters/roach_test"
@@ -1399,7 +1415,6 @@ class roachInterface(object):
 
         save_path = os.path.join(target_path, sweep_dir)
         self.path_configuration = save_path
-        #self.cold_array_bb = (((self.cold_array_rf) - (self.center_freq)/2.))*1.0e6	
         
         print("Save path = ", save_path)
 
@@ -1424,7 +1439,6 @@ class roachInterface(object):
         
         os.system(command_cleanlink)
         
-
         command_linkfile = "ln -f -s " + save_path +" "+ target_path+'current'
         
         print("Creating new current link with command:", command_linkfile)
@@ -1474,6 +1488,13 @@ class roachInterface(object):
 
         if do_plot:
                 self.plot_targ(save_path)
+        
+        logfile = open(save_path + "/sweep_log.dat","w")
+        logfile.write(str(self.timestring))
+        logfile.write(str(conf.sweep_span))
+        logfile.write(str(conf.sweep_step))
+        logfile.close()
+
         return
 
     def sweep_lo(self, Npackets_per = 100, channels = None, span = 2.0e6, save_path = '/sweeps/vna'):
@@ -2031,6 +2052,7 @@ class roachInterface(object):
                 self.upconvert = ((self.test_comb + (self.center_freq/self.divconst)*1.0e6))/1.0e6
                 print "RF tones =", self.upconvert
 #		print "test_comb = ", self.test_comb
+                
                 self.writeQDR(self.test_comb, transfunc = False)
 
 
@@ -2178,6 +2200,11 @@ class roachInterface(object):
                         self.array_configuration()
                 else: 
                         print "Using array configuration from" , self.path_configuration
+                
+                if "current" in sys.argv:
+                    self.radii = np.load(self.path_configuration.as_posix() + "/radii.npy")
+                    self.centers = np.load(self.path_configuration.as_posix() + "/centers.npy")
+                    self.rotations = np.load(self.path_configuration.as_posix()+"/rotations.npy")
 
                 nchannel=len(self.radii)
                 #nchannel=input('number of channels?')#aggiunto 09082017 AP
